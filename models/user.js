@@ -101,7 +101,7 @@ class User {
 
   static async messagesFrom(username) {
     const messageResult = await db.query(
-      `SELECT id, to_user AS toUser, body, sent_at, read_at
+      `SELECT id, to_user, body, sent_at, read_at
        FROM messages
        WHERE from_user = $1`,
        [username]
