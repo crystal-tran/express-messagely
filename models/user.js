@@ -118,12 +118,6 @@ class User {
 
     // TODO: Come back here;
 
-
-    `);
-
-
-
-
     return messageResult.toUser.user;
 
 
