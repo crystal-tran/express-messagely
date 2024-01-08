@@ -100,6 +100,33 @@ class User {
    */
 
   static async messagesFrom(username) {
+    const messageResult = await db.query(
+      `SELECT id, to_user AS toUser, body, sent_at, read_at
+       FROM messages
+       WHERE from_user = $1`,
+       [username]
+    );
+    const message = messageResult.rows;
+
+    const result = await db.query(
+      `SELECT username, first_name, last_name, phone
+       FROM users AS u
+          LEFT JOIN messages AS m ON to_user = u.username
+       WHERE from_user = $1`,
+       [username]
+    );
+
+    // TODO: Come back here;
+
+
+    `);
+
+
+
+
+    return messageResult.toUser.user;
+
+
   }
 
   /** Return messages to this user.
