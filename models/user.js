@@ -102,19 +102,19 @@ class User {
   static async messagesFrom(username) {
     const result = await db.query(
       `SELECT m.id,
-                  m.to_username,
-                  m.body,
-                  m.sent_at,
-                  m.read_at,
-                  t.first_name AS to_first_name,
-                  t.last_name AS to_last_name,
-                  t.phone AS to_phone
-           FROM messages as m
-                JOIN users as t ON m.to_username = t.username
+              m.to_username,
+              m.body,
+              m.sent_at,
+              m.read_at,
+              t.first_name AS to_first_name,
+              t.last_name AS to_last_name,
+              t.phone AS to_phone
+           FROM messages AS m
+                JOIN users AS t ON m.to_username = t.username
            WHERE m.from_username = $1`,
       [username]);
 
-    let messages = result.rows.map(m => {
+    const messages = result.rows.map(m => {
       return {
         id: m.id,
         to_user: {
@@ -129,7 +129,6 @@ class User {
       };
     });
     return messages;
-
   }
 
   /** Return messages to this user.
@@ -141,6 +140,35 @@ class User {
    */
 
   static async messagesTo(username) {
+    const result = await db.query(
+      `SELECT m.id,
+              m.from_username,
+              m.body,
+              m.sent_at,
+              m.read_at,
+              f.first_name AS from_first_name,
+              f.last_name AS from_last_name,
+              f.phone AS from_phone
+          FROM messages AS m
+                JOIN users AS f ON m.from_username = f.username
+          WHERE m.to_username = $1`,
+      [username]);
+
+    const messages = result.rows.map(m => {
+      return {
+        id: m.id,
+        from_user: {
+          username: m.from_username,
+          first_name: m.from_first_name,
+          last_name: m.from_last_name,
+          phone: m.from_phone
+        },
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at,
+      };
+    });
+    return messages;
   }
 }
 
