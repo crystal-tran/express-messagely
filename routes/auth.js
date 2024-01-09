@@ -22,7 +22,7 @@ router.post("/login", async function(req, res){
   if (result !== true) {
     throw new UnauthorizedError("Invalid user/password.");
   }
-
+  await User.updateLoginTimestamp(username);
   const token = jwt.sign({ username }, SECRET_KEY);
   return res.json({ token });
 });
@@ -45,6 +45,7 @@ router.post("/register", async function(req, res) {
     throw new BadRequestError("User registration failed.");
   }
 
+  await User.updateLoginTimestamp(username);
   const token = jwt.sign({ username }, SECRET_KEY);
   return res.json({ token });
 })
