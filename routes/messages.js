@@ -23,17 +23,19 @@ const router = new Router();
  *
  **/
 
-router.get("/:id", authenticateJWT, ensureLoggedIn, async function (req, res) {
-  const message = await Message.get();
+router.get("/:id", ensureLoggedIn, async function (req, res) {
+  const message = await Message.get(req.params.id);
+
+  const currentUsername = res.locals.user.username;
 
   const fromUsername = message.from_user.username;
   const toUsername = message.to_user.username;
-  const currentUsername = res.local.user.username;
 
-  if (currentUsername === fromUsername || currentUsername === toUsername) {
-    return res.json({ message });
+  if (![fromUsername, toUsername].includes(currentUsername)){
+    throw new UnauthorizedError();
   }
-  throw new UnauthorizedError();
+
+  return res.json({ message });
 });
 
 /** POST / - post message.
@@ -43,24 +45,21 @@ router.get("/:id", authenticateJWT, ensureLoggedIn, async function (req, res) {
  *
 **/
 
-router.post("/", authenticateJWT, ensureLoggedIn, async function (req, res) {
+router.post("/", ensureLoggedIn, async function (req, res) {
   if (req.body === undefined) throw new BadRequestError();
 
   const { to_username, body } = req.body;
   const from_username = res.locals.user.username;
 
-  const toUserCheck = await User.get(to_username);
-  if (!toUserCheck) throw new BadRequestError("to_username not found");
-
-  const message = await Message.create({ from_username, to_username, body });
-
-  if (message !== undefined) {
-    return res.json({ message });
+  try {
+    const message = await Message.create({ from_username, to_username, body });
+    if (message !== undefined) {
+      return res.json({ message });
+    }
+  } catch (err) {
+    throw new BadRequestError("Message creation failed.");
   }
-  throw new BadRequestError("Message creation failed.");
 });
-
-
 
 /** POST/:id/read - mark message as read:
  *
@@ -70,7 +69,7 @@ router.post("/", authenticateJWT, ensureLoggedIn, async function (req, res) {
  *
  **/
 
-router.post("/:id/read", authenticateJWT, ensureLoggedIn, async function (req, res) {
+router.post("/:id/read", ensureLoggedIn, async function (req, res) {
   const messageData = await Message.get(req.params.id);
 
   console.log('read at', messageData.read_at);
@@ -78,21 +77,22 @@ router.post("/:id/read", authenticateJWT, ensureLoggedIn, async function (req, r
   const currentUsername = res.locals.user.username;
   const toUsername = messageData.to_user.username;
 
-  if (currentUsername === toUsername) {
-    // Read message if unread, otherwise return when it was read
-    let message;
-    if (messageData.read_at === null) {
-      message = await Message.markRead(req.params.id);
-    }
-    else {
-      message = {
-        id: messageData.id,
-        read_at: messageData.read_at,
-      };
-    }
-    return res.json({ message });
+  if (currentUsername !== toUsername) {
+    throw new UnauthorizedError("Only recipient can read message");
   }
-  throw new UnauthorizedError("Only recipient can read message");
+
+  // Read message if unread, otherwise return when it was read
+  let message;
+  if (messageData.read_at === null) {
+    message = await Message.markRead(req.params.id);
+  }
+  else {
+    message = {
+      id: messageData.id,
+      read_at: messageData.read_at,
+    };
+  }
+  return res.json({ message });
 });
 
 

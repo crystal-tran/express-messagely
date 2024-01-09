@@ -18,12 +18,11 @@ const router = new Router();
  *
  **/
 
-router.get("/", authenticateJWT, ensureLoggedIn, async function (req, res) {
+router.get("/", ensureLoggedIn, async function (req, res) {
   const users = await User.all();
 
   return res.json({ users });
 });
-
 
 /** GET /:username - get detail of users.
  *
@@ -31,14 +30,11 @@ router.get("/", authenticateJWT, ensureLoggedIn, async function (req, res) {
  *
  **/
 
-router.get("/:username",
-  authenticateJWT,
-  ensureCorrectUser,
-  async function (req, res) {
-    const users = await User.get(req.params.username);
+router.get("/:username", ensureCorrectUser, async function (req, res) {
+  const users = await User.get(req.params.username);
 
-    return res.json({ users });
-  });
+  return res.json({ users });
+});
 
 /** GET /:username/to - get messages to user
  *
@@ -50,14 +46,11 @@ router.get("/:username",
  *
  **/
 
-router.get("/:username/to",
-  authenticateJWT,
-  ensureCorrectUser,
-  async function (req, res) {
-    const messages = await User.messagesTo(req.params.username);
+router.get("/:username/to", ensureCorrectUser, async function (req, res) {
+  const messages = await User.messagesTo(req.params.username);
 
-    return res.json({ messages });
-  });
+  return res.json({ messages });
+});
 
 /** GET /:username/from - get messages from user
  *
@@ -69,14 +62,11 @@ router.get("/:username/to",
  *
  **/
 
-router.get("/:username/from",
-  authenticateJWT,
-  ensureCorrectUser,
-  async function (req, res) {
-    const messages = await User.messagesFrom(req.params.username);
+router.get("/:username/from", ensureCorrectUser, async function (req, res) {
+  const messages = await User.messagesFrom(req.params.username);
 
-    return res.json({ messages });
-  });
+  return res.json({ messages });
+});
 
 
 module.exports = router;
