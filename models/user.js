@@ -19,12 +19,18 @@ class User {
   static async register({ username, password, first_name, last_name, phone }) {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
     const result = await db.query(
-      `INSERT INTO users
-          (username, password, first_name, last_name, phone, join_at)
-       VALUES ($1, $2, $3, $4, $5, current_timestamp)
-       RETURNING username,password, first_name, last_name, phone`,
-      [username, hashedPassword, first_name, last_name, phone],
-    );
+      `INSERT INTO users (username,
+                          password,
+                          first_name,
+                          last_name,
+                          phone,
+                          join_at)
+       VALUES
+          ($1, $2, $3, $4, $5, current_timestamp)
+       RETURNING username, password, first_name, last_name, phone`,
+      [username, hashedPassword, first_name, last_name, phone]);
+    // TODO: could also call last login timestamp (if registering also logging in)
+
     return result.rows[0];
   }
 
@@ -35,8 +41,8 @@ class User {
       `SELECT password
           FROM users
           WHERE username = $1`,
-      [username]
-    );
+      [username]);
+
     const user = result.rows[0];
 
     if (user) {
@@ -51,18 +57,19 @@ class User {
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
+    // TODO: check that username exists, throw Not Found error
     await db.query(
       `UPDATE users
-      SET last_login_at = current_timestamp
+          SET last_login_at = current_timestamp
           WHERE username = $1`,
-      [username]
-    );
+      [username]);
   }
 
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 
   static async all() {
+    // TODO: be explicit with order
     const result = await db.query(
       `SELECT username, first_name, last_name
       FROM users`
@@ -81,12 +88,12 @@ class User {
    *          last_login_at } */
 
   static async get(username) {
+    // TODO: throw not found error instead of undefined return
     const result = await db.query(
       `SELECT username, first_name, last_name, phone, join_at, last_login_at
       FROM users
       WHERE username = $1`,
-      [username]
-    );
+      [username]);
 
     return result.rows[0];
   }
@@ -100,6 +107,8 @@ class User {
    */
 
   static async messagesFrom(username) {
+    // TODO: not found error for if username is not found
+    // TODO: use order by, probably sent_at
     const result = await db.query(
       `SELECT m.id,
               m.to_username,
@@ -140,6 +149,8 @@ class User {
    */
 
   static async messagesTo(username) {
+    // TODO: not found error for if username is not found
+    // TODO: use order by, probably sent_at
     const result = await db.query(
       `SELECT m.id,
               m.from_username,
