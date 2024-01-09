@@ -74,5 +74,18 @@ router.post("/", authenticateJWT, ensureLoggedIn, async function (req, res) {
  *
  **/
 
+router.post("/:id/read", authenticateJWT, ensureLoggedIn, async function (req,res){
+  const message = await Message.get(req.params.id);
+  // console.log("message", "message")
+  const user = res.locals.user.username;
+  const toUserCheck = message.to_user.username;
+  console.log("user:", user, "toUserCheck:", toUserCheck);
+
+  if(user === toUserCheck){
+    const readMessage = await Message.markRead(req.params.id);
+    return res.json({ readMessage });
+  }
+  throw new BadRequestError("Unauthorized to view message");
+});
 
 module.exports = router;
