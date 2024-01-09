@@ -1,7 +1,17 @@
 "use strict";
 
+const { UnauthorizedError } = require("../expressError");
+const {
+  authenticateJWT,
+  ensureLoggedIn,
+  ensureCorrectUser,
+} = require("../middleware/auth");
+
+const Message = require("../models/message");
+
 const Router = require("express").Router;
 const router = new Router();
+
 
 /** GET /:id - get detail of message.
  *
@@ -15,7 +25,18 @@ const router = new Router();
  * Makes sure that the currently-logged-in users is either the to or from user.
  *
  **/
+router.get("/:id", authenticateJWT, ensureLoggedIn, async function (req, res){
+  const message = await Message.get();
 
+  const from_user = message.from_user.username;
+  const to_user = message.to_user.username;
+  const user = res.local.username;
+
+  if(user === from_user || user === to_user){
+    return res.json({ message });
+  }
+  throw new UnauthorizedError();
+});
 
 /** POST / - post message.
  *
