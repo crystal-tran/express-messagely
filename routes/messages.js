@@ -1,11 +1,7 @@
 "use strict";
 
 const { UnauthorizedError, BadRequestError } = require("../expressError");
-const {
-  authenticateJWT,
-  ensureLoggedIn,
-  ensureCorrectUser,
-} = require("../middleware/auth");
+const { authenticateJWT, ensureLoggedIn } = require("../middleware/auth");
 
 const Message = require("../models/message");
 const User = require("../models/user");
@@ -30,11 +26,11 @@ const router = new Router();
 router.get("/:id", authenticateJWT, ensureLoggedIn, async function (req, res) {
   const message = await Message.get();
 
-  const from_user = message.from_user.username;
-  const to_user = message.to_user.username;
-  const user = res.local.user.username;
+  const fromUsername = message.from_user.username;
+  const toUsername = message.to_user.username;
+  const currentUsername = res.local.user.username;
 
-  if (user === from_user || user === to_user) {
+  if (currentUsername === fromUsername || currentUsername === toUsername) {
     return res.json({ message });
   }
   throw new UnauthorizedError();
@@ -74,18 +70,30 @@ router.post("/", authenticateJWT, ensureLoggedIn, async function (req, res) {
  *
  **/
 
-router.post("/:id/read", authenticateJWT, ensureLoggedIn, async function (req,res){
-  const message = await Message.get(req.params.id);
-  // console.log("message", "message")
-  const user = res.locals.user.username;
-  const toUserCheck = message.to_user.username;
-  console.log("user:", user, "toUserCheck:", toUserCheck);
+router.post("/:id/read", authenticateJWT, ensureLoggedIn, async function (req, res) {
+  const messageData = await Message.get(req.params.id);
 
-  if(user === toUserCheck){
-    const readMessage = await Message.markRead(req.params.id);
-    return res.json({ readMessage });
+  console.log('read at', messageData.read_at);
+
+  const currentUsername = res.locals.user.username;
+  const toUsername = messageData.to_user.username;
+
+  if (currentUsername === toUsername) {
+    // Read message if unread, otherwise return when it was read
+    let message;
+    if (messageData.read_at === null) {
+      message = await Message.markRead(req.params.id);
+    }
+    else {
+      message = {
+        id: messageData.id,
+        read_at: messageData.read_at,
+      };
+    }
+    return res.json({ message });
   }
-  throw new BadRequestError("Unauthorized to view message");
+  throw new UnauthorizedError("Only recipient can read message");
 });
+
 
 module.exports = router;
