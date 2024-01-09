@@ -8,7 +8,7 @@ const { SECRET_KEY } = require("../config");
 
 
 const User = require("../models/user");
-const Message = require("../models/message");
+
 const { BadRequestError, UnauthorizedError } = require("../expressError");
 
 /** POST /login: {username, password} => {token} */
