@@ -27,9 +27,9 @@ router.get("/", ensureLoggedIn, async function (req, res) {
  **/
 
 router.get("/:username", ensureCorrectUser, async function (req, res) {
-  const users = await User.get(req.params.username);
+  const user = await User.get(req.params.username);
 
-  return res.json({ users });
+  return res.json({ user });
 });
 
 /** GET /:username/to - get messages to user
